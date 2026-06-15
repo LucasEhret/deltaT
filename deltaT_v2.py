@@ -10,6 +10,16 @@ st.set_page_config(
     layout="centered",
 )
 
+
+# ── Session-state initialisation ─────────────────────────────────────────────
+if "recording" not in st.session_state:
+    st.session_state.recording = False
+if "start_time" not in st.session_state:
+    st.session_state.start_time = None
+if "measurements" not in st.session_state:
+    st.session_state.measurements = []  # list of dicts
+
+    
 # Replace the existing st.markdown(...) CSS block with this:
 button_color = "#d32f2f" if st.session_state.recording else "#2DC5A2"  # dark red : Streamlit default red
 
@@ -29,13 +39,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── Session-state initialisation ─────────────────────────────────────────────
-if "recording" not in st.session_state:
-    st.session_state.recording = False
-if "start_time" not in st.session_state:
-    st.session_state.start_time = None
-if "measurements" not in st.session_state:
-    st.session_state.measurements = []  # list of dicts
+
 
 # ── Header ────────────────────────────────────────────────────────────────────
 st.title("⏱️ Flow Measurement")
