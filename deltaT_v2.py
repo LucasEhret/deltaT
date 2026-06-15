@@ -87,6 +87,13 @@ else:
 
 st.divider()
 
+if st.session_state.recording:
+    st.text(f"Start time : {st.session_state.start_time.strftime("%H:%M:%S")}")
+else:
+    st.text("Not started, press ▶ button to start")
+
+st.divider()
+
 # ── Results table ─────────────────────────────────────────────────────────────
 measurements = st.session_state.measurements
 
