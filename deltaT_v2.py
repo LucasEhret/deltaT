@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+PARIS = ZoneInfo("Europe/Paris")
 import io
 
 # ── Page config ──────────────────────────────────────────────────────────────
@@ -18,6 +21,8 @@ if "start_time" not in st.session_state:
     st.session_state.start_time = None
 if "measurements" not in st.session_state:
     st.session_state.measurements = []  # list of dicts
+if "deltaT" not in st.session_state:
+    st.session_state.deltaT = None
 
     
 # Replace the existing st.markdown(...) CSS block with this:
@@ -29,7 +34,7 @@ st.markdown(
     div[data-testid="stButton"] > button[kind="primary"] {{
         height: 5rem;
         font-size: 1.6rem;
-        font-weight: 700;
+        font-weight: 700 !important;
         width: 100%;
         background-color: {button_color} !important;
         border-color: {button_color} !important;
@@ -56,13 +61,14 @@ elapsed_placeholder = st.empty()
 
 # ── Start / Stop button ───────────────────────────────────────────────────────
 if not st.session_state.recording:
-    if st.button("▶ Start", type="primary", use_container_width=True):
+    if st.button("▶ Start", type="primary", width="stretch"):
         st.session_state.recording = True
-        st.session_state.start_time = datetime.now()
+        st.session_state.start_time = datetime.now(PARIS)
+        st.session_state.deltaT = None
         st.rerun()
 else:
     if st.button("⏹ Stop", type="primary", width="stretch"):
-        end_time = datetime.now()
+        end_time = datetime.now(PARIS)
         start_time = st.session_state.start_time
         delta = (end_time - start_time).total_seconds()
 
@@ -75,6 +81,8 @@ else:
         )
         st.session_state.recording = False
         st.session_state.start_time = None
+        st.session_state.end_time = end_time
+        st.session_state.deltaT = delta
         st.rerun()
 
 # # Auto-refresh while recording so the elapsed timer stays live
@@ -87,10 +95,13 @@ else:
 
 st.divider()
 
+if not st.session_state.recording and not st.session_state.start_time and not st.session_state.deltaT:
+    st.text("Not started, press ▶ button to start")
 if st.session_state.recording:
     st.text(f"Start time : {st.session_state.start_time.strftime("%H:%M:%S")}")
-else:
-    st.text("Not started, press ▶ button to start")
+if st.session_state.deltaT:
+    st.metric("Delta T of previous measurement : ", st.session_state.deltaT)
+    
 
 st.divider()
 
@@ -104,13 +115,13 @@ else:
 
     df = pd.DataFrame(measurements)
     df.index = df.index + 1  # 1-based row numbers
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width="stretch")
 
     # ── Actions row ───────────────────────────────────────────────────────────
     col_del, col_csv, col_xlsx = st.columns(3)
 
     with col_del:
-        if st.button("🗑️ Delete last row", use_container_width=True):
+        if st.button("🗑️ Delete last row", width="stretch"):
             st.session_state.measurements.pop()
             st.rerun()
 
@@ -122,7 +133,7 @@ else:
             data=csv_bytes,
             file_name=f"measurements_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv",
-            use_container_width=True,
+            width="stretch",
         )
 
     # Excel export
@@ -137,5 +148,5 @@ else:
             data=excel_bytes,
             file_name=f"measurements_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
+            width="stretch",
         )
